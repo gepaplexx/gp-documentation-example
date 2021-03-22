@@ -1,0 +1,40 @@
+---
+name: CI
+
+'on':
+  push:
+    branches:
+      - 'feature/*'
+    tags-ignore:
+      - '*'
+
+jobs:
+  publish:
+    name: Publish Dokumentation to Github Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6 # Not needed with a .ruby-version file
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      - run: bundle install
+      - run: bundle exec asciidoctor index.adoc
+      - run: mkdir docs
+      - run: mv index.html docs/
+      # pushes using the user that kicked off the action. Requires `jq` in the builder
+      - run: git config user.name test
+      - run: git config user.email test@test.test
+      - run: git fetch --all
+      - run: git add --all
+      - run: git commit -m "Publish to gh-pages branch"
+      - run: git remote add pages https://x-access-token:$GITHUB_TOKEN@github.com/RasztDani/RasztDani.github.io.git
+      - run: git remote -v
+      - run: git show-ref
+      - run: git branch -a
+      - run: git push origin HEAD:gh-pages -f
+
+
